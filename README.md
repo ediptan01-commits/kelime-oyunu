@@ -1,28 +1,23 @@
-# Kare Kelime 🧩
+# Kelime Rotaları 🧭
 
-Flutter ile geliştirilmiş, Türkçe Q klavyeli ve ilk harfi açık Lingo tarzı kelime tahmin oyunu.
+WOW tarzı dairesel harf çarkı ile sürükleyerek kelime oluşturup kesişen bulmacaları tamamladığın özgün Türkçe Flutter mobil oyunu.
 
-## Özellikler
-- 4×4 → 5×5 → 6×6 bulmacalar
-- Her satırda ilk harf açık ve değiştirilemez
-- Türkçe Q klavye (Q, W, X, Ç, Ğ, İ, Ö, Ş, Ü)
-- Yeşil / sarı / gri harf geri bildirimi ve tekrarlanan harflerde doğru değerlendirme
-- Çevrimdışı örnek kelime havuzu, ipucu, altın ve puan
-- Android APK ve AAB için GitHub Actions
+- 18 bölüm, Türkçe harfler, kesişen bulmacalar
+- Sürükleme ve dokunarak harf seçme, kontrol, karıştırma, ipucu
+- Manzara temaları, puan/altın, ilerleme kaydetme ve harita
+- Çevrimdışı oynanış
 
-## Yerelde çalıştırma
-Flutter SDK yüklüyken:
+## Android APK ve AAB
+
+GitHub Actions → **Android APK + AAB** iş akışı her main değişiminde çalışır.
+Başarılı derlemenin **Artifacts** bölümünden APK ve AAB indirilebilir.
+
+Yerelde Flutter SDK ile:
 
 ```sh
-flutter create --platforms=android --org com.teknolojix --project-name kare_kelime .
+flutter create --platforms=android --org com.teknolojix --project-name kelime_rotalari .
 flutter pub get
 flutter run
 ```
 
-## Derleme
-GitHub'da **Actions → Android APK + AAB** akışını açın.
-`main` dalına gönderilen her değişiklikle otomatik derleme başlar.
-Başarılı işin **Artifacts** bölümünden APK ve AAB indirilebilir.
-
-> İlk sürümde tüm harf dizileri tahmin olarak kabul edilir; kapsamlı sözlük kontrolü henüz bulunmaz.
-> Varsayılan Android derlemesi test amaçlı anahtar kullanır; Google Play'de yayımlamak için kalıcı upload keystore ile imzalama yapılmalıdır.
+**Not:** Bu ilk deneme sürümünde kelimeler yalnızca bölüm havuzlarından kabul edilir. Google Play üretim sürümü öncesinde kalıcı upload keystore imzası, simge, gizlilik politikası ve geniş Türkçe sözlük ayrıca hazırlanmalıdır. WOW'a ait görseller, logo ve içerik kullanılmaz.
