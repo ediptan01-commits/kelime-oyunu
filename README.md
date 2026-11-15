@@ -1,4 +1,4 @@
-# Kelime Rotaları 🧭
+# Kelime Bul 🧭
 
 WOW tarzı dairesel harf çarkı ile sürükleyerek kelime oluşturup kesişen bulmacaları tamamladığın özgün Türkçe Flutter mobil oyunu.
 
@@ -21,3 +21,5 @@ flutter run
 ```
 
 **Not:** Bu ilk deneme sürümünde kelimeler yalnızca bölüm havuzlarından kabul edilir. Google Play üretim sürümü öncesinde kalıcı upload keystore imzası, simge, gizlilik politikası ve geniş Türkçe sözlük ayrıca hazırlanmalıdır. WOW'a ait görseller, logo ve içerik kullanılmaz.
+
+> Mağaza adı: Kelime Bul. Aynı adı kullanan başka oyunlar bulunabilir; yayımlamadan önce marka/mağaza karışıklığı ayrıca değerlendirilmelidir.

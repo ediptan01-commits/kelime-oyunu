@@ -6,7 +6,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
   runApp(MaterialApp(
-    title: 'Kelime Rotaları',
+    title: 'Kelime Bul',
     debugShowCheckedModeBanner: false,
     theme: ThemeData(useMaterial3: true, colorSchemeSeed: const Color(0xff167e92)),
     home: WordGame(prefs: prefs),
@@ -289,7 +289,7 @@ class _WordGameState extends State<WordGame> {
           IconButton.filledTonal(onPressed:openMap,icon:const Icon(Icons.map_outlined)),
           const SizedBox(width:5),
           Expanded(child:Column(children:[
-            const Text('KELİME ROTALARI',style:TextStyle(color:Colors.white,fontWeight:FontWeight.w900,fontSize:10,letterSpacing:2)),
+            const Text('KELİME BUL',style:TextStyle(color:Colors.white,fontWeight:FontWeight.w900,fontSize:10,letterSpacing:2)),
             Text(pack.name,textAlign:TextAlign.center,maxLines:1,overflow:TextOverflow.ellipsis,
               style:const TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w900)),
           ])),

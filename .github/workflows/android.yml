@@ -21,6 +21,8 @@ jobs:
           cache: true
       - name: Generate Android project
         run: flutter create --platforms=android --org com.teknolojix --project-name kelime_rotalari .
+      - name: Set Android display name
+        run: sed -i 's/android:label="kelime_rotalari"/android:label="Kelime Bul"/' android/app/src/main/AndroidManifest.xml
       - name: Get packages
         run: flutter pub get
       - name: Build APK
