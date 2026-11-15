@@ -275,35 +275,30 @@ class _WordGameState extends State<WordGame> {
     );
   }
   Widget landscape(){
-    final colors=switch(level%4){
-      0=>[const Color(0xff365696),const Color(0xffce95aa),const Color(0xffeac49d)],
-      1=>[const Color(0xff2a83b7),const Color(0xff8cd6dc),const Color(0xffffd9a3)],
-      2=>[const Color(0xff397b84),const Color(0xffb9d7ac),const Color(0xffe0e2ae)],
-      _=>[const Color(0xff5748a2),const Color(0xffaf90c5),const Color(0xfff3be9c)]
-    };
+    final colors=[const Color(0xff092850),const Color(0xff2b568b),const Color(0xffce88a6),const Color(0xfff2c095)];
     return Container(
       decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:colors)),
       child:Stack(children:[
         const Positioned.fill(child:CustomPaint(painter:LandPainter())),
+        const Positioned.fill(child:IgnorePointer(child:CustomPaint(painter:GoldCorners()))),
         Positioned(top:11,left:12,right:12,child:Row(children:[
-          IconButton.filledTonal(onPressed:openMap,icon:const Icon(Icons.map_outlined)),
+          Material(color:const Color(0xff082f58),shape:const CircleBorder(side:BorderSide(color:Color(0xffffc66b),width:2)),child:IconButton(onPressed:openMap,icon:const Icon(Icons.map_outlined,color:Color(0xffffd78b)))),
           const SizedBox(width:5),
           Expanded(child:Column(children:[
-            const Text('KELİME BUL',style:TextStyle(color:Colors.white,fontWeight:FontWeight.w900,fontSize:10,letterSpacing:2)),
-            Text(pack.name,textAlign:TextAlign.center,maxLines:1,overflow:TextOverflow.ellipsis,
-              style:const TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w900)),
+            const Text('KELİME BUL',style:TextStyle(color:Color(0xffffdc92),fontWeight:FontWeight.w900,fontSize:12,letterSpacing:2)),
+            Container(margin:const EdgeInsets.only(top:4),padding:const EdgeInsets.symmetric(horizontal:8,vertical:4),decoration:BoxDecoration(color:const Color(0xd9082c54),border:Border.all(color:const Color(0xffffc66b),width:1.5),borderRadius:BorderRadius.circular(14)),child:Text(pack.name,textAlign:TextAlign.center,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w900))),
           ])),
           Container(padding:const EdgeInsets.all(9),
-            decoration:BoxDecoration(color:const Color(0xaa14395d),borderRadius:BorderRadius.circular(12)),
+            decoration:BoxDecoration(color:const Color(0xee072f54),border:Border.all(color:const Color(0xffffc66b)),borderRadius:BorderRadius.circular(16)),
             child:Text('🪙 '+coins.toString(),style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w900))),
         ])),
-        Positioned(top:72,left:20,right:20,child:Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[
+        Positioned(top:84,left:16,right:16,child:Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[
           Text('BÖLÜM '+(level+1).toString()+'/'+packs.length.toString(),
             style:const TextStyle(color:Colors.white,fontSize:11,fontWeight:FontWeight.w900)),
           Text('⭐ '+solved.length.toString()+'/'+pack.words.length.toString(),
             style:const TextStyle(color:Colors.white,fontSize:12,fontWeight:FontWeight.w900)),
         ])),
-        Positioned.fill(top:95,bottom:10,left:14,right:14,child:crossword()),
+        Positioned.fill(top:121,bottom:7,left:12,right:12,child:crossword()),
       ]),
     );
   }
@@ -324,6 +319,7 @@ class _WordGameState extends State<WordGame> {
             child:Container(width:u-4,height:u-4,alignment:Alignment.center,
               decoration:BoxDecoration(
                 color:shown.contains(cell.key)?const Color(0xffffd677):const Color(0xfffffdf5),
+                border:Border.all(color:const Color(0xffd9a24d),width:1.6),
                 borderRadius:BorderRadius.circular(8),
                 boxShadow:const [BoxShadow(color:Color(0x442c405b),blurRadius:5,offset:Offset(0,3))]),
               child:Text(shown.contains(cell.key)?cell.value:'',
@@ -333,19 +329,19 @@ class _WordGameState extends State<WordGame> {
     )));
   }
   Widget controls(){
-    final size=math.min(216.0,math.max(185.0,MediaQuery.sizeOf(context).width*.55));
+    final size=math.min(210.0,math.max(181.0,MediaQuery.sizeOf(context).width*.54));
     return Container(
       padding:const EdgeInsets.fromLTRB(14,9,14,5),
-      decoration:const BoxDecoration(color:Color(0xfff5f9f8),
-        borderRadius:BorderRadius.vertical(top:Radius.circular(25))),
+      decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xff0a436e),Color(0xff032a51),Color(0xff001d3a)]),border:Border.all(color:const Color(0xffffc36b),width:1.5),
+        borderRadius:const BorderRadius.vertical(top:Radius.circular(25))),
       child:SingleChildScrollView(child:Column(children:[
         Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[
-          const Text('🔤 KELİME OLUŞTUR',style:TextStyle(fontSize:12,fontWeight:FontWeight.w900,color:Color(0xff31596d))),
-          Text('⭐ '+score.toString()+' puan',style:const TextStyle(fontSize:12,fontWeight:FontWeight.w900,color:Color(0xffa4773d))),
+          const Text('🔤 KELİME OLUŞTUR',style:TextStyle(fontSize:12,fontWeight:FontWeight.w900,color:Colors.white)),
+          Text('⭐ '+score.toString()+' puan',style:const TextStyle(fontSize:12,fontWeight:FontWeight.w900,color:Color(0xffffd17a))),
         ]),
         SizedBox(height:32,child:Center(child:Text(currentWord.isEmpty?'Harfleri birleştir':currentWord,
           style:TextStyle(fontSize:currentWord.isEmpty?13:25,fontWeight:FontWeight.w900,letterSpacing:currentWord.isEmpty?0:4,
-            color:currentWord.isEmpty?const Color(0xff94a6aa):const Color(0xff1b9395))))),
+            color:currentWord.isEmpty?const Color(0xffffe0a2):const Color(0xffffcc73))))),
         SizedBox(width:size,height:size,child:Listener(
           behavior:HitTestBehavior.opaque,
           onPointerDown:(e){final i=hit(e.localPosition,size);if(i!=null){pressed=true;dragged=false;select(i);}},
@@ -358,10 +354,10 @@ class _WordGameState extends State<WordGame> {
           onPointerCancel:(e){pressed=false;},
           child:Stack(children:[
             Positioned.fill(child:Container(margin:const EdgeInsets.all(6),
-              decoration:BoxDecoration(shape:BoxShape.circle,color:const Color(0xffdceef0),
-                border:Border.all(color:Colors.white,width:5),boxShadow:const [
+              decoration:BoxDecoration(shape:BoxShape.circle,gradient:const RadialGradient(colors:[Color(0xff0b5581),Color(0xff052a50),Color(0xff001d38)]),
+                border:Border.all(color:const Color(0xffffca65),width:3),boxShadow:const [
                   BoxShadow(color:Color(0x445a8596),blurRadius:12,offset:Offset(0,6))]))),
-            const Center(child:Icon(Icons.explore,color:Color(0xffadd0d6),size:32)),
+            const Center(child:Icon(Icons.auto_awesome,color:Color(0xffffc66b),size:24)),
             Positioned.fill(child:CustomPaint(painter:LinePainter([
               for(final i in picked)Offset(
                 size/2+math.cos(-math.pi/2+2*math.pi*i/wheel.length)*size*.355,
@@ -374,9 +370,9 @@ class _WordGameState extends State<WordGame> {
                 top:size/2+math.sin(-math.pi/2+2*math.pi*i/wheel.length)*size*.355-26,
                 child:Container(width:52,height:52,alignment:Alignment.center,
                   decoration:BoxDecoration(shape:BoxShape.circle,
-                    color:picked.contains(i)?const Color(0xffffd170):Colors.white,
+                    color:picked.contains(i)?const Color(0xffffd170):const Color(0xfffff9ee),border:Border.all(color:const Color(0xffffbc58),width:2),
                     boxShadow:const [BoxShadow(color:Color(0x55658b95),offset:Offset(0,4),blurRadius:5)]),
-                  child:Text(wheel[i],style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900,color:Color(0xff31556a)))),
+                  child:Text(wheel[i],style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900,color:Color(0xff092b50)))),
               ),
           ]),
         )),
@@ -389,21 +385,21 @@ class _WordGameState extends State<WordGame> {
           Expanded(child:action(Icons.lightbulb_outline,'İpucu 35',hint)),
         ]),
         Padding(padding:const EdgeInsets.only(top:8),child:Text(message,textAlign:TextAlign.center,maxLines:2,
-          style:const TextStyle(fontSize:11,fontWeight:FontWeight.w700,color:Color(0xff658092)))),
+          style:const TextStyle(fontSize:11,fontWeight:FontWeight.w700,color:Color(0xffffd28a)))),
       ])),
     );
   }
   Widget action(IconData icon,String label,VoidCallback tap,{bool special=false}){
     return Material(
-      color:special?const Color(0xffffc65b):const Color(0xffe2eef1),
-      borderRadius:BorderRadius.circular(12),
-      child:InkWell(onTap:tap,borderRadius:BorderRadius.circular(12),
+      color:special?const Color(0xffffc65b):const Color(0xff073b65),
+      shape:StadiumBorder(side:const BorderSide(color:Color(0xffffc46c),width:1.4)),
+      child:InkWell(onTap:tap,customBorder:const StadiumBorder(),
         child:Padding(padding:const EdgeInsets.symmetric(vertical:12,horizontal:3),
           child:Row(mainAxisAlignment:MainAxisAlignment.center,children:[
-            Icon(icon,size:16,color:const Color(0xff355b6c)),
+            Icon(icon,size:16,color:special?const Color(0xff082d50):const Color(0xffffcf74)),
             const SizedBox(width:3),
             Flexible(child:Text(label,maxLines:1,overflow:TextOverflow.ellipsis,
-              style:const TextStyle(color:Color(0xff355b6c),fontSize:11,fontWeight:FontWeight.w900))),
+              style:TextStyle(color:special?const Color(0xff082d50):Colors.white,fontSize:11,fontWeight:FontWeight.w900))),
           ]))),
     );
   }
@@ -423,20 +419,50 @@ class LinePainter extends CustomPainter {
 }
 class LandPainter extends CustomPainter {
   const LandPainter();
-  @override void paint(Canvas canvas,Size size){
-    final center=Offset(size.width*.82,size.height*.27);
-    canvas.drawCircle(center,58,Paint()..color=const Color(0x22fff7d5));
-    canvas.drawCircle(center,40,Paint()..color=const Color(0xaafff3c4));
-    final mountains=Path()..moveTo(0,size.height*.86)..lineTo(size.width*.25,size.height*.52)
-      ..lineTo(size.width*.41,size.height*.8)..lineTo(size.width*.7,size.height*.46)
-      ..lineTo(size.width,size.height*.87)..lineTo(size.width,size.height)
-      ..lineTo(0,size.height)..close();
-    canvas.drawPath(mountains,Paint()..color=const Color(0x66556d92));
-    final hills=Path()..moveTo(0,size.height*.9)
-      ..quadraticBezierTo(size.width*.28,size.height*.64,size.width*.55,size.height*.86)
-      ..quadraticBezierTo(size.width*.82,size.height*.73,size.width,size.height*.9)
-      ..lineTo(size.width,size.height)..lineTo(0,size.height)..close();
-    canvas.drawPath(hills,Paint()..color=const Color(0x8850787e));
+  @override void paint(Canvas c,Size s){
+    final w=s.width,h=s.height;
+    c.drawCircle(Offset(w*.78,h*.54),w*.10,Paint()..color=const Color(0x55ffe0a8));
+    final crescent=Offset(w*.52,h*.22);
+    c.drawCircle(crescent,10,Paint()..color=const Color(0xffffdb9d));
+    c.drawCircle(crescent.translate(5,-4),10,Paint()..color=const Color(0xff2c4e83));
+    for(var i=0;i<30;i++){
+      c.drawCircle(Offset((i*37%97)/97*w,(i*23%51)/100*h),.8,Paint()..color=const Color(0x77fff4ce));
+    }
+    final mountain=Path()..moveTo(0,h*.84)..lineTo(w*.24,h*.53)..lineTo(w*.43,h*.83)
+      ..lineTo(w*.71,h*.54)..lineTo(w,h*.87)..lineTo(w,h)..lineTo(0,h)..close();
+    c.drawPath(mountain,Paint()..color=const Color(0x776d6383));
+    c.drawRect(Rect.fromLTWH(0,h*.92,w,h*.08),Paint()..color=const Color(0x88d4c4bf));
+    // Illustrative mosque on the left, kept behind interactive crossword tiles.
+    final baseX=w*.15,ground=h*.88;
+    c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(baseX-w*.14,ground-h*.12,w*.32,h*.12),const Radius.circular(3)),
+      Paint()..color=const Color(0xffe7d4bb));
+    c.drawOval(Rect.fromCenter(center:Offset(baseX+w*.02,ground-h*.13),width:w*.24,height:h*.13),
+      Paint()..color=const Color(0xff276e66));
+    for(final d in [-.15,.20]){
+      final x=baseX+w*d;
+      c.drawRect(Rect.fromLTWH(x,ground-h*.28,w*.024,h*.27),Paint()..color=const Color(0xffead8bd));
+      final tip=Path()..moveTo(x-w*.009,ground-h*.28)..lineTo(x+w*.012,ground-h*.35)
+        ..lineTo(x+w*.033,ground-h*.28)..close();
+      c.drawPath(tip,Paint()..color=const Color(0xff367d70));
+    }
+    // Kaaba in the distance at right.
+    final x=w*.75,y=h*.75,bw=w*.17,bh=h*.115;
+    c.drawRect(Rect.fromLTWH(x,y,bw,bh),Paint()..color=const Color(0xff181a21));
+    c.drawRect(Rect.fromLTWH(x,y+h*.025,bw,h*.013),Paint()..color=const Color(0xffdfb86a));
+    final side=Path()..moveTo(x+bw,y)..lineTo(x+bw+w*.026,y-h*.02)
+      ..lineTo(x+bw+w*.026,y+bh-h*.02)..lineTo(x+bw,y+bh)..close();
+    c.drawPath(side,Paint()..color=const Color(0xff313038));
   }
   @override bool shouldRepaint(covariant LandPainter old)=>false;
+}
+class GoldCorners extends CustomPainter {
+  const GoldCorners();
+  @override void paint(Canvas c,Size s){
+    final p=Paint()..color=const Color(0xffffc56b)..strokeWidth=1.4..style=PaintingStyle.stroke;
+    final shape=Path()..moveTo(0,85)..quadraticBezierTo(0,0,85,0)
+      ..moveTo(s.width-85,0)..quadraticBezierTo(s.width,0,s.width,85);
+    c.drawPath(shape,p);
+    for(var i=0;i<5;i++){c.drawCircle(Offset(i*11+5,5),1.3,p);c.drawCircle(Offset(s.width-i*11-5,5),1.3,p);}
+  }
+  @override bool shouldRepaint(covariant GoldCorners old)=>false;
 }
