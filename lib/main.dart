@@ -150,7 +150,7 @@ class _WordGameState extends State<WordGame> {
   List<String> wheel=[];
   final solved=<String>{}, revealed=<String>{}, picked=<int>[];
   bool pressed=false,dragged=false;
-  String message='Harfleri sürükleyerek kelime oluştur.';
+  String message='';
   Pack get pack=>packs[level];
   String get currentWord=>picked.map((i)=>wheel[i]).join();
 
@@ -164,11 +164,11 @@ class _WordGameState extends State<WordGame> {
   }
   void loadLevel(){
     board=BoardData.make(pack.words);
-    wheel=pack.letters.split('');
+    wheel=pack.letters.split('')..shuffle(rand);
     solved..clear()..addAll(widget.prefs.getStringList('solved_'+level.toString())??[]);
     revealed..clear()..addAll(widget.prefs.getStringList('hints_'+level.toString())??[]);
     picked.clear();
-    message='Harfleri sürükleyerek kelime oluştur.';
+    message='';
   }
   void save(){
     widget.prefs.setInt('level',level);
@@ -226,18 +226,18 @@ class _WordGameState extends State<WordGame> {
       context:context,barrierDismissible:false,
       builder:(ctx)=>AlertDialog(
         backgroundColor:const Color(0xfffff9e9),
-        title:const Text('🏆 Rota Tamamlandı!',textAlign:TextAlign.center),
+        title:const Text('🏆 Bölüm tamamlandı!',textAlign:TextAlign.center),
         content:Text(pack.words.length.toString()+' kelimeyi çözdün!\n+50 altın ödül seni bekliyor.',textAlign:TextAlign.center),
         actionsAlignment:MainAxisAlignment.center,
         actions:[FilledButton(
           onPressed:(){
             Navigator.pop(ctx);
             if(level+1>=packs.length){
-              setState(()=>message='🎉 Bütün rotaları tamamladın!');
+              setState(()=>message='🎉 Tüm bölümleri tamamladın!');
             }else{
               setState((){level++;coins+=50;loadLevel();});save();
             }
-          },child:Text(level+1<packs.length?'Sonraki Rota →':'Harika!'),
+          },child:Text(level+1<packs.length?'Sonraki bölüm →':'Harika!'),
         )],
       ),
     );
@@ -249,10 +249,10 @@ class _WordGameState extends State<WordGame> {
       builder:(ctx)=>SafeArea(child:SizedBox(
         height:math.min(560,MediaQuery.sizeOf(ctx).height*.7),
         child:Column(children:[
-          const Padding(padding:EdgeInsets.all(12),child:Text('🧭 Keşif Haritası',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900))),
+          const Padding(padding:EdgeInsets.all(12),child:Text('Bölümler',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900))),
           Expanded(child:ListView.builder(itemCount:packs.length,itemBuilder:(context,i)=>ListTile(
             title:Text(packs[i].name),leading:CircleAvatar(child:Text((i+1).toString())),
-            subtitle:Text(i>level?'Kilitli':i==level?'Oynanıyor':'Tamamlandı'),
+            subtitle:Text(i>level?'Kilitli':i==level?'Mevcut bölüm':'Tamamlandı'),
             trailing:Icon(i>level?Icons.lock:i==level?Icons.play_arrow:Icons.check_circle),
             enabled:i<=level,onTap:(){
               Navigator.pop(ctx);
@@ -279,7 +279,8 @@ class _WordGameState extends State<WordGame> {
     return Container(
       decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:colors)),
       child:Stack(children:[
-        const Positioned.fill(child:CustomPaint(painter:LandPainter())),
+        Positioned.fill(child:Image.asset(level.isEven?'assets/backgrounds/kaaba.jpg':'assets/backgrounds/mosque.jpg',fit:BoxFit.cover,alignment:Alignment.center,errorBuilder:(context,error,stack)=>const DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(colors:[Color(0xff193660),Color(0xff93799e)]))))),
+        const Positioned.fill(child:ColoredBox(color:Color(0x4a071b35))),
         const Positioned.fill(child:IgnorePointer(child:CustomPaint(painter:GoldCorners()))),
         Positioned(top:11,left:12,right:12,child:Row(children:[
           Material(color:const Color(0xff082f58),shape:const CircleBorder(side:BorderSide(color:Color(0xffffc66b),width:2)),child:IconButton(onPressed:openMap,icon:const Icon(Icons.map_outlined,color:Color(0xffffd78b)))),
@@ -339,7 +340,7 @@ class _WordGameState extends State<WordGame> {
           const Text('🔤 KELİME OLUŞTUR',style:TextStyle(fontSize:12,fontWeight:FontWeight.w900,color:Colors.white)),
           Text('⭐ '+score.toString()+' puan',style:const TextStyle(fontSize:12,fontWeight:FontWeight.w900,color:Color(0xffffd17a))),
         ]),
-        SizedBox(height:32,child:Center(child:Text(currentWord.isEmpty?'Harfleri birleştir':currentWord,
+        SizedBox(height:32,child:Center(child:Text(currentWord.isEmpty?'':currentWord,
           style:TextStyle(fontSize:currentWord.isEmpty?13:25,fontWeight:FontWeight.w900,letterSpacing:currentWord.isEmpty?0:4,
             color:currentWord.isEmpty?const Color(0xffffe0a2):const Color(0xffffcc73))))),
         SizedBox(width:size,height:size,child:Listener(
