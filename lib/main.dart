@@ -422,7 +422,7 @@ class _WordGameState extends State<WordGame> {
                         shape:RoundedRectangleBorder(
                           side:const BorderSide(color:gold,width:2),
                           borderRadius:BorderRadius.circular(30)))))),
-              ]))));
+              ])));
           })),
           Container(margin:const EdgeInsets.all(8),padding:const EdgeInsets.all(4),
             decoration:royal(),child:Row(mainAxisAlignment:MainAxisAlignment.spaceAround,
