@@ -145,7 +145,8 @@ class WordGame extends StatefulWidget {
 
 class _WordGameState extends State<WordGame> {
   final rand=math.Random();
-  late int level,coins,score;
+  late int level,coins,score,highestUnlocked;
+  final completedLevels=<int>{};
   late BoardData board;
   List<String> wheel=[];
   final solved=<String>{}, revealed=<String>{}, picked=<int>[];
@@ -158,6 +159,8 @@ class _WordGameState extends State<WordGame> {
   void initState(){
     super.initState();
     level=math.max(0,math.min(packs.length-1,widget.prefs.getInt('level')??0));
+    highestUnlocked=math.max(level,math.min(packs.length-1,widget.prefs.getInt('highestUnlocked')??level));
+    completedLevels.addAll(widget.prefs.getStringList('completedLevels')?.map(int.tryParse).whereType<int>()??<int>[]);
     coins=widget.prefs.getInt('coins')??120;
     score=widget.prefs.getInt('score')??0;
     loadLevel();
@@ -172,6 +175,8 @@ class _WordGameState extends State<WordGame> {
   }
   void save(){
     widget.prefs.setInt('level',level);
+    widget.prefs.setInt('highestUnlocked',highestUnlocked);
+    widget.prefs.setStringList('completedLevels',completedLevels.map((e)=>e.toString()).toList());
     widget.prefs.setInt('coins',coins);
     widget.prefs.setInt('score',score);
     widget.prefs.setStringList('solved_'+level.toString(),solved.toList());
@@ -222,22 +227,30 @@ class _WordGameState extends State<WordGame> {
     setState(()=>message='Açılacak harf kalmadı.');
   }
   void complete(){
+    final completedAt=level;
+    final firstCompletion=!completedLevels.contains(completedAt);
+    if(firstCompletion){
+      completedLevels.add(completedAt);
+      coins+=50;
+      highestUnlocked=math.max(highestUnlocked,math.min(packs.length-1,completedAt+1));
+      save();
+    }
     showDialog<void>(
       context:context,barrierDismissible:false,
       builder:(ctx)=>AlertDialog(
         backgroundColor:const Color(0xfffff9e9),
         title:const Text('🏆 Bölüm tamamlandı!',textAlign:TextAlign.center),
-        content:Text(pack.words.length.toString()+' kelimeyi çözdün!\n+50 altın ödül seni bekliyor.',textAlign:TextAlign.center),
+        content:Text('${pack.words.length} kelimeyi çözdün!'+(firstCompletion?'\n+50 altın kazandın.':''),textAlign:TextAlign.center),
         actionsAlignment:MainAxisAlignment.center,
         actions:[FilledButton(
           onPressed:(){
             Navigator.pop(ctx);
-            if(level+1>=packs.length){
+            if(completedAt+1>=packs.length){
               setState(()=>message='🎉 Tüm bölümleri tamamladın!');
             }else{
-              setState((){level++;coins+=50;loadLevel();});save();
+              setState((){level=completedAt+1;loadLevel();});save();
             }
-          },child:Text(level+1<packs.length?'Sonraki bölüm →':'Harika!'),
+          },child:Text(completedAt+1<packs.length?'Sonraki bölüm →':'Harika!'),
         )],
       ),
     );
@@ -252,16 +265,24 @@ class _WordGameState extends State<WordGame> {
           const Padding(padding:EdgeInsets.all(12),child:Text('Bölümler',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900))),
           Expanded(child:ListView.builder(itemCount:packs.length,itemBuilder:(context,i)=>ListTile(
             title:Text(packs[i].name),leading:CircleAvatar(child:Text((i+1).toString())),
-            subtitle:Text(i>level?'Kilitli':i==level?'Mevcut bölüm':'Tamamlandı'),
-            trailing:Icon(i>level?Icons.lock:i==level?Icons.play_arrow:Icons.check_circle),
-            enabled:i<=level,onTap:(){
+            subtitle:Text(i>highestUnlocked?'Kilitli':i==level?'Mevcut bölüm':completedLevels.contains(i)?'Tamamlandı':'Açık'),
+            trailing:Icon(i>highestUnlocked?Icons.lock:i==level?Icons.play_arrow:completedLevels.contains(i)?Icons.check_circle:Icons.lock_open),
+            enabled:i<=highestUnlocked,onTap:(){
               Navigator.pop(ctx);
               if(i!=level){setState((){level=i;loadLevel();});save();}
             },
           ))),
+          TextButton.icon(onPressed:(){Navigator.pop(ctx);showPrivacy();},icon:const Icon(Icons.privacy_tip_outlined),label:const Text('Gizlilik ve görsel kaynakları')),
         ]),
       )),
     );
+  }
+  void showPrivacy(){
+    showDialog<void>(context:context,builder:(ctx)=>AlertDialog(
+      title:const Text('Gizlilik ve görsel kaynakları'),
+      content:const SingleChildScrollView(child:Text('Kelime Bul çevrimdışı çalışır. Üyelik, reklam ve analiz SDK’sı bulunmaz. Oyun ilerlemesi, puanlar ve ipuçları sadece bu cihazda saklanır. Oyun bu bilgileri geliştiriciye göndermez. Uygulamayı kaldırmak cihazdaki kayıtları silebilir.\\n\\nFotoğraflar: Kâbe — Farazbinyusuf, Wikimedia Commons (CC0 1.0); Sultanahmet Camii — neverbutterfly, Wikimedia Commons (CC BY 2.0). İkinci fotoğraf ekrana sığması için kırpılır ve üzerine yarı saydam karartma uygulanır.\\n\\nGeliştirici: Teknolojix. İletişim bilgileri Google Play mağaza sayfasında yer alacaktır.')),
+      actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('Kapat'))],
+    ));
   }
   @override
   Widget build(BuildContext context){
