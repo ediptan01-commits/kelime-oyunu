@@ -34,15 +34,15 @@ os.makedirs("assets/backgrounds",exist_ok=True)
 credits=[]
 for i,(place,filename,license,license_url) in enumerate(items,1):
  data=None;error=None
- for url in [url_for(filename,True),url_for(filename,False)]:
-  for attempt in range(3):
+ for url in ["https://wsrv.nl/?"+urllib.parse.urlencode({"url":url_for(filename,False),"w":960,"output":"jpg"}),url_for(filename,True)]:
+  for attempt in range(2):
    try:
     blob=get(url)
     if blob[:2]!=b"\xff\xd8" or len(blob)<10000:raise ValueError("invalid JPEG")
     data=blob;break
    except Exception as e:
     error=e;print("retry",i,attempt,type(e).__name__,str(e)[:90],flush=True)
-    time.sleep(4*(attempt+1))
+    time.sleep(3*(attempt+1))
   if data:break
  if not data:sys.exit(f"Cannot fetch {place}, {filename}: {error}")
  with open(f"assets/backgrounds/level_{i:02}.jpg","wb") as fp:fp.write(data)
