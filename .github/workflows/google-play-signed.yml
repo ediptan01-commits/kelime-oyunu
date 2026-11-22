@@ -2,6 +2,9 @@ name: Google Play - Signed Release
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main, fix/play-upload-signing]
+    paths: ['.github/workflows/google-play-signed.yml']
 
 permissions:
   contents: read
@@ -11,22 +14,26 @@ jobs:
   signed-release:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    env:
-      UPLOAD_STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
-      UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
-      UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - name: Verify signing secrets exist
         env:
+          UPLOAD_STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
+          UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
           KEYSTORE_B64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -z "${KEYSTORE_B64}" || -z "${UPLOAD_STORE_PASSWORD}" || -z "${UPLOAD_KEY_ALIAS}" || -z "${UPLOAD_KEY_PASSWORD}" ]]; then
-            echo "::error::Missing one or more UPLOAD_KEYSTORE_BASE64 / UPLOAD_STORE_PASSWORD / UPLOAD_KEY_ALIAS / UPLOAD_KEY_PASSWORD secrets."
-            exit 1
-          fi
+          missing=0
+          for name in KEYSTORE_B64 UPLOAD_STORE_PASSWORD UPLOAD_KEY_ALIAS UPLOAD_KEY_PASSWORD; do
+            if [[ -z "${!name}" ]]; then
+              if [[ "$name" == KEYSTORE_B64 ]]; then name=UPLOAD_KEYSTORE_BASE64; fi
+              echo "::error::Missing Actions secret: $name"
+              missing=1
+            fi
+          done
+          exit "$missing"
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -36,18 +43,15 @@ jobs:
         run: flutter create --platforms=android --org com.teknolojix --project-name kelime_rotalari .
       - name: Set Android display name
         run: sed -i 's/android:label="kelime_rotalari"/android:label="Kelime Bul"/' android/app/src/main/AndroidManifest.xml
-      - name: Restore verified background photographs
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p /tmp/old-build assets/backgrounds
-          gh run download 43811543011 --repo "${{ github.repository }}" --name kelime-rotalari-aab --dir /tmp/old-build
-          unzip -p /tmp/old-build/app-release.aab base/assets/flutter_assets/assets/backgrounds/kaaba.jpg > assets/backgrounds/kaaba.jpg
-          unzip -p /tmp/old-build/app-release.aab base/assets/flutter_assets/assets/backgrounds/mosque.jpg > assets/backgrounds/mosque.jpg
-          test "$(stat -c%s assets/backgrounds/kaaba.jpg)" -gt 10000
-          test "$(stat -c%s assets/backgrounds/mosque.jpg)" -gt 10000
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install graphics dependency
+        run: python -m pip install pillow==11.3.0
+      - name: Download 18 distinct licensed Istanbul photographs
+        run: python scripts/download_istanbul_backgrounds.py
+      - name: Generate matching app launcher icon
+        run: python scripts/create_launcher_icon.py
       - name: Generate original sound effects
         run: python3 scripts/generate_sounds.py
       - name: Install and configure private upload key
@@ -80,22 +84,61 @@ jobs:
           updated=updated.replace(debug,'signingConfig = signingConfigs.getByName("uploadRelease")',1)
           path.write_text(updated)
           PY
-      - name: Check upload keystore
-        shell: bash
-        run: |
-          set -euo pipefail
-          keytool -list -keystore "$UPLOAD_KEYSTORE_PATH" -storepass "$UPLOAD_STORE_PASSWORD" -alias "$UPLOAD_KEY_ALIAS" > /dev/null
       - name: Get Flutter packages
         run: flutter pub get
-      - name: Build signed Android App Bundle
-        run: flutter build appbundle --release
-      - name: Build signed APK for testing
-        run: flutter build apk --release
-      - name: Verify AAB signature
-        shell: bash
+      - name: Build with the existing upload key
+        env:
+          UPLOAD_STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
+          UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+        run: |
+          flutter build appbundle --release
+          flutter build apk --release
+      - name: Verify signed bundle
+        env:
+          UPLOAD_STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
+          UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          PLAY_UPLOAD_SHA256: ${{ vars.PLAY_UPLOAD_SHA256 }}
         run: |
           set -euo pipefail
-          jarsigner -verify -strict build/app/outputs/bundle/release/app-release.aab
+          aab=build/app/outputs/bundle/release/app-release.aab
+          cert="$RUNNER_TEMP/upload.der"
+          keytool -exportcert -alias "$UPLOAD_KEY_ALIAS" -keystore "$UPLOAD_KEYSTORE_PATH" -storepass:env UPLOAD_STORE_PASSWORD -file "$cert"
+          subject=$(openssl x509 -inform DER -in "$cert" -noout -subject -nameopt RFC2253)
+          if [[ "${subject,,}" == *"cn=android debug"* ]]; then
+            echo "::error::Android debug signing certificate"
+            exit 1
+          fi
+          fingerprint=$(sha256sum "$cert" | cut -d' ' -f1)
+          expected=${PLAY_UPLOAD_SHA256//:/}
+          if [[ -n "$expected" && "${expected,,}" != "$fingerprint" ]]; then
+            echo "::error::Certificate differs from Play upload certificate"
+            exit 1
+          fi
+          # Trust only the selected public certificate during strict JAR verification.
+          trust="$RUNNER_TEMP/verification.p12"
+          keytool -importcert -noprompt -storetype PKCS12 -alias upload -file "$cert" -keystore "$trust" -storepass publiccert
+          jarsigner -verify -strict -keystore "$trust" -storepass publiccert "$aab" upload
+          tool="$RUNNER_TEMP/bundletool.jar"
+          curl -fsSL --retry 3 https://github.com/google/bundletool/releases/download/1.18.2/bundletool-all-1.18.2.jar -o "$tool"
+          java -jar "$tool" dump manifest --bundle="$aab" > "$RUNNER_TEMP/manifest.xml"
+          python3 - <<'PY'
+          from pathlib import Path
+          import os, xml.etree.ElementTree as ET
+          manifest = ET.parse(Path(os.environ["RUNNER_TEMP"]) / "manifest.xml").getroot()
+          android = "{http://schemas.android.com/apk/res/android}"
+          version = next(line.split()[1] for line in Path("pubspec.yaml").read_text().splitlines() if line.startswith("version:"))
+          name, code = version.split("+")
+          assert manifest.get("package") == "com.teknolojix.kelime_rotalari"
+          assert manifest.get(android + "versionCode") == code
+          assert manifest.get(android + "versionName") == name
+          assert manifest.find("application").get(android + "debuggable", "false") == "false"
+          print(f"Package {manifest.get('package')}, version {name}, versionCode {code}")
+          PY
+          echo "Verified upload certificate SHA-256: $fingerprint"
+      - name: Remove temporary upload keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload-keystore.jks"
       - name: Publish signed APK
         uses: actions/upload-artifact@v4
         with:
