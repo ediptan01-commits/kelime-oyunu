@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   android:
@@ -23,13 +24,16 @@ jobs:
         run: flutter create --platforms=android --org com.teknolojix --project-name kelime_rotalari .
       - name: Set Android display name
         run: sed -i 's/android:label="kelime_rotalari"/android:label="Kelime Bul"/' android/app/src/main/AndroidManifest.xml
-      - name: Download existing licensed background photos
+      - name: Restore verified licensed photographs from previous successful AAB
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p assets/backgrounds
-          curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 20 --max-time 90             "https://upload.wikimedia.org/wikipedia/commons/1/10/Al-Kaaba_in_Mecca.jpg" -o assets/backgrounds/kaaba.jpg
-          curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 20 --max-time 90             "https://upload.wikimedia.org/wikipedia/commons/a/ae/Sultan_Ahmed_Mosque_-_Istanbul.jpg" -o assets/backgrounds/mosque.jpg
+          mkdir -p /tmp/old-build assets/backgrounds
+          gh run download 43811543011 --repo "${{ github.repository }}" --name kelime-rotalari-aab --dir /tmp/old-build
+          unzip -p /tmp/old-build/app-release.aab base/assets/flutter_assets/assets/backgrounds/kaaba.jpg > assets/backgrounds/kaaba.jpg
+          unzip -p /tmp/old-build/app-release.aab base/assets/flutter_assets/assets/backgrounds/mosque.jpg > assets/backgrounds/mosque.jpg
           test "$(stat -c%s assets/backgrounds/kaaba.jpg)" -gt 10000
           test "$(stat -c%s assets/backgrounds/mosque.jpg)" -gt 10000
       - name: Generate original sound effects
