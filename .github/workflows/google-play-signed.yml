@@ -1,0 +1,112 @@
+name: Google Play - Signed Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  signed-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      UPLOAD_STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
+      UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+      UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify signing secrets exist
+        env:
+          KEYSTORE_B64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${KEYSTORE_B64}" || -z "${UPLOAD_STORE_PASSWORD}" || -z "${UPLOAD_KEY_ALIAS}" || -z "${UPLOAD_KEY_PASSWORD}" ]]; then
+            echo "::error::Missing one or more UPLOAD_KEYSTORE_BASE64 / UPLOAD_STORE_PASSWORD / UPLOAD_KEY_ALIAS / UPLOAD_KEY_PASSWORD secrets."
+            exit 1
+          fi
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate Android project
+        run: flutter create --platforms=android --org com.teknolojix --project-name kelime_rotalari .
+      - name: Set Android display name
+        run: sed -i 's/android:label="kelime_rotalari"/android:label="Kelime Bul"/' android/app/src/main/AndroidManifest.xml
+      - name: Restore verified background photographs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/old-build assets/backgrounds
+          gh run download 43811543011 --repo "${{ github.repository }}" --name kelime-rotalari-aab --dir /tmp/old-build
+          unzip -p /tmp/old-build/app-release.aab base/assets/flutter_assets/assets/backgrounds/kaaba.jpg > assets/backgrounds/kaaba.jpg
+          unzip -p /tmp/old-build/app-release.aab base/assets/flutter_assets/assets/backgrounds/mosque.jpg > assets/backgrounds/mosque.jpg
+          test "$(stat -c%s assets/backgrounds/kaaba.jpg)" -gt 10000
+          test "$(stat -c%s assets/backgrounds/mosque.jpg)" -gt 10000
+      - name: Generate original sound effects
+        run: python3 scripts/generate_sounds.py
+      - name: Install and configure private upload key
+        env:
+          KEYSTORE_B64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/upload-keystore.jks"
+          test -s "$RUNNER_TEMP/upload-keystore.jks"
+          echo "UPLOAD_KEYSTORE_PATH=$RUNNER_TEMP/upload-keystore.jks" >> "$GITHUB_ENV"
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('android/app/build.gradle.kts')
+          original=path.read_text()
+          marker='    buildTypes {'
+          debug='signingConfig = signingConfigs.getByName("debug")'
+          assert marker in original and debug in original, "Unexpected Flutter Gradle template; refuse unsafe signing"
+          config="""    signingConfigs {
+              create("uploadRelease") {
+                  storeFile = file(System.getenv("UPLOAD_KEYSTORE_PATH") ?: error("Missing keystore path"))
+                  storePassword = System.getenv("UPLOAD_STORE_PASSWORD") ?: error("Missing store password")
+                  keyAlias = System.getenv("UPLOAD_KEY_ALIAS") ?: error("Missing key alias")
+                  keyPassword = System.getenv("UPLOAD_KEY_PASSWORD") ?: error("Missing key password")
+              }
+          }
+          """
+          updated=original.replace(marker,config+marker,1)
+          updated=updated.replace(debug,'signingConfig = signingConfigs.getByName("uploadRelease")',1)
+          path.write_text(updated)
+          PY
+      - name: Check upload keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          keytool -list -keystore "$UPLOAD_KEYSTORE_PATH" -storepass "$UPLOAD_STORE_PASSWORD" -alias "$UPLOAD_KEY_ALIAS" > /dev/null
+      - name: Get Flutter packages
+        run: flutter pub get
+      - name: Build signed Android App Bundle
+        run: flutter build appbundle --release
+      - name: Build signed APK for testing
+        run: flutter build apk --release
+      - name: Verify AAB signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          jarsigner -verify -strict build/app/outputs/bundle/release/app-release.aab
+      - name: Publish signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kelime-bul-signed-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish signed Play AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: kelime-bul-signed-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14
