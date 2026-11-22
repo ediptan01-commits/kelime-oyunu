@@ -9,8 +9,7 @@ WOW tarzı dairesel harf çarkı ile sürükleyerek kelime oluşturup kesişen b
 
 ## Android APK ve AAB
 
-GitHub Actions → **Android APK + AAB** iş akışı her main değişiminde çalışır.
-Başarılı derlemenin **Artifacts** bölümünden APK ve AAB indirilebilir.
+**Android test APK** test paketini üretir. Google Play AAB için [kalıcı anahtarla imzalama adımlarını](PLAY_SIGNING_SETUP.md) izleyin.
 
 Yerelde Flutter SDK ile:
 
