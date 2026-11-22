@@ -439,19 +439,27 @@ class _WordGameState extends State<WordGame> {
   @override
   Widget build(BuildContext context){
     final height=MediaQuery.sizeOf(context).height;
-    return Scaffold(backgroundColor:const Color(0xff041a37),
-      body:onHome?homeScreen():SafeArea(child:Column(children:[
-        Expanded(child:landscape()),
-        SizedBox(height:math.min(350.0,height*.53),child:controls()),
-      ])));
+    final photo='assets/backgrounds/level_'+(level+1).toString().padLeft(2,'0')+'.jpg';
+    return Scaffold(
+      backgroundColor:const Color(0xff071c36),
+      body:onHome?homeScreen():SafeArea(child:Stack(children:[
+        // One continuous, full-height location photo behind board and letters.
+        Positioned.fill(child:Image.asset(photo,fit:BoxFit.cover,
+          alignment:Alignment.center,
+          errorBuilder:(context,error,stack)=>const ColoredBox(color:Color(0xff143859)))),
+        // Preserve photo detail; only a subtle dark tint keeps labels readable.
+        const Positioned.fill(child:IgnorePointer(child:ColoredBox(color:Color(0x12041427)))),
+        Column(children:[
+          Expanded(child:landscape()),
+          SizedBox(height:math.min(350.0,height*.53),child:controls()),
+        ]),
+      ])),
+    );
   }
   Widget landscape(){
-    final colors=[const Color(0xff092850),const Color(0xff2b568b),const Color(0xffce88a6),const Color(0xfff2c095)];
     return Container(
-      decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:colors)),
+      color:Colors.transparent,
       child:Stack(children:[
-        Positioned.fill(child:Image.asset('assets/backgrounds/level_'+(level+1).toString().padLeft(2,'0')+'.jpg',fit:BoxFit.cover,errorBuilder:(context,error,stack)=>const ColoredBox(color:Color(0xff17375d)))),
-        const Positioned.fill(child:ColoredBox(color:Color(0x4a071b35))),
         const Positioned.fill(child:IgnorePointer(child:CustomPaint(painter:GoldCorners()))),
         Positioned(top:11,left:12,right:12,child:Row(children:[
           Material(color:const Color(0xff082f58),shape:const CircleBorder(side:BorderSide(color:Color(0xffffc66b),width:2)),child:IconButton(onPressed:showHome,icon:const Icon(Icons.arrow_back,color:Color(0xffffd78b)))),
@@ -494,7 +502,7 @@ class _WordGameState extends State<WordGame> {
                 color:shown.contains(cell.key)?const Color(0xffffd677):const Color(0xfffffdf5),
                 border:Border.all(color:const Color(0xffd9a24d),width:1.6),
                 borderRadius:BorderRadius.circular(8),
-                boxShadow:const [BoxShadow(color:Color(0x442c405b),blurRadius:5,offset:Offset(0,3))]),
+                boxShadow:const [BoxShadow(color:Color(0x99304049),blurRadius:5,offset:Offset(0,3))]),
               child:Text(shown.contains(cell.key)?cell.value:'',
                 style:const TextStyle(color:Color(0xff314e62),fontSize:25,fontWeight:FontWeight.w900))),
           ),
@@ -504,13 +512,22 @@ class _WordGameState extends State<WordGame> {
   Widget controls(){
     final size=math.min(210.0,math.max(181.0,MediaQuery.sizeOf(context).width*.54));
     return Container(
-      padding:const EdgeInsets.fromLTRB(14,9,14,5),
-      decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xff0a436e),Color(0xff032a51),Color(0xff001d3a)]),border:Border.all(color:const Color(0xffffc36b),width:1.5),
-        borderRadius:const BorderRadius.vertical(top:Radius.circular(25))),
+      padding:const EdgeInsets.fromLTRB(14,7,14,6),
+      color:Colors.transparent,
       child:SingleChildScrollView(child:Column(children:[
         Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[
-          const Text('🔤 KELİME OLUŞTUR',style:TextStyle(fontSize:12,fontWeight:FontWeight.w900,color:Colors.white)),
-          Text('⭐ '+score.toString()+' puan',style:const TextStyle(fontSize:12,fontWeight:FontWeight.w900,color:Color(0xffffd17a))),
+          Container(padding:const EdgeInsets.symmetric(horizontal:11,vertical:7),
+            decoration:BoxDecoration(color:const Color(0xc8082d50),
+              border:Border.all(color:const Color(0xffffc36b),width:1.2),
+              borderRadius:BorderRadius.circular(18)),
+            child:const Text('🔤 KELİME OLUŞTUR',
+              style:TextStyle(fontSize:12,fontWeight:FontWeight.w900,color:Colors.white))),
+          Container(padding:const EdgeInsets.symmetric(horizontal:11,vertical:7),
+            decoration:BoxDecoration(color:const Color(0xc8082d50),
+              border:Border.all(color:const Color(0xffffc36b),width:1.2),
+              borderRadius:BorderRadius.circular(18)),
+            child:Text('⭐ '+score.toString()+' puan',style:const TextStyle(
+              fontSize:12,fontWeight:FontWeight.w900,color:Color(0xffffd17a)))),
         ]),
         SizedBox(height:32,child:Center(child:Text(currentWord.isEmpty?'':currentWord,
           style:TextStyle(fontSize:currentWord.isEmpty?13:25,fontWeight:FontWeight.w900,letterSpacing:currentWord.isEmpty?0:4,
@@ -527,9 +544,10 @@ class _WordGameState extends State<WordGame> {
           onPointerCancel:(e){pressed=false;},
           child:Stack(children:[
             Positioned.fill(child:Container(margin:const EdgeInsets.all(6),
-              decoration:BoxDecoration(shape:BoxShape.circle,gradient:const RadialGradient(colors:[Color(0xff0b5581),Color(0xff052a50),Color(0xff001d38)]),
-                border:Border.all(color:const Color(0xffffca65),width:3),boxShadow:const [
-                  BoxShadow(color:Color(0x445a8596),blurRadius:12,offset:Offset(0,6))]))),
+              decoration:BoxDecoration(shape:BoxShape.circle,
+                color:Colors.transparent,
+                border:Border.all(color:const Color(0xffffca65),width:2.4),
+                boxShadow:const [BoxShadow(color:Color(0x440a1520),blurRadius:7)]))),
             const Center(child:Icon(Icons.auto_awesome,color:Color(0xffffc66b),size:24)),
             Positioned.fill(child:CustomPaint(painter:LinePainter([
               for(final i in picked)Offset(
@@ -564,7 +582,7 @@ class _WordGameState extends State<WordGame> {
   }
   Widget action(IconData icon,String label,VoidCallback tap,{bool special=false}){
     return Material(
-      color:special?const Color(0xffffc65b):const Color(0xff073b65),
+      color:special?const Color(0xffffc65b):const Color(0xdb073b65),
       shape:StadiumBorder(side:const BorderSide(color:Color(0xffffc46c),width:1.4)),
       child:InkWell(onTap:tap,customBorder:const StadiumBorder(),
         child:Padding(padding:const EdgeInsets.symmetric(vertical:12,horizontal:3),
