@@ -159,6 +159,7 @@ class _WordGameState extends State<WordGame> {
   final solved=<String>{}, revealed=<String>{}, picked=<int>[];
   bool pressed=false,dragged=false;
   String message='';
+  bool onHome=true;
   Pack get pack=>packs[level];
   String get currentWord=>picked.map((i)=>wheel[i]).join();
 
@@ -294,27 +295,159 @@ class _WordGameState extends State<WordGame> {
       actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('Kapat'))],
     ));
   }
+
+  static const gold=Color(0xffffce66);
+  BoxDecoration royal({bool bright=false})=>BoxDecoration(
+    gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
+      colors:bright?[const Color(0xffffefae),const Color(0xffffad26)]:
+        [const Color(0xff114a78),const Color(0xff092b53),const Color(0xff02152a)]),
+    border:Border.all(color:gold,width:1.7),borderRadius:BorderRadius.circular(21),
+    boxShadow:const [BoxShadow(color:Color(0x9901162e),blurRadius:12,offset:Offset(0,6))]);
+  void showHome(){effect('button');setState(()=>onHome=true);}
+  void playGame(){effect('button');setState(()=>onHome=false);}
+  void showAchievements(){
+    effect('button');
+    showDialog<void>(context:context,builder:(ctx)=>AlertDialog(
+      title:const Text('🏆 Başarılar'),
+      content:Text('Tamamlanan bölüm: '+completedLevels.length.toString()+' / '+packs.length.toString()+
+        '\nToplam puan: '+score.toString()+'\nAltın: '+coins.toString()),
+      actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('Kapat'))]));
+  }
+  void showSettings(){
+    effect('button');
+    showModalBottomSheet<void>(context:context,showDragHandle:true,
+      builder:(ctx)=>SafeArea(child:Padding(padding:const EdgeInsets.all(20),
+        child:Column(mainAxisSize:MainAxisSize.min,children:[
+          const Text('Ayarlar',style:TextStyle(fontWeight:FontWeight.w900,fontSize:21)),
+          StatefulBuilder(builder:(ctx,rebuild)=>SwitchListTile(
+            value:soundEnabled,onChanged:(_){toggleSound();rebuild((){});},
+            title:const Text('Ses efektleri'),secondary:const Icon(Icons.volume_up))),
+          ListTile(title:const Text('Gizlilik ve fotoğraf kaynakları'),
+            leading:const Icon(Icons.privacy_tip_outlined),
+            onTap:(){Navigator.pop(ctx);showPrivacy();}),
+        ]))));
+  }
+  Widget brand(){
+    return Column(mainAxisSize:MainAxisSize.min,children:[
+      SizedBox(width:160,height:147,child:Stack(alignment:Alignment.center,children:[
+        Container(width:128,height:128,decoration:BoxDecoration(shape:BoxShape.circle,
+          border:Border.all(color:gold,width:5),
+          boxShadow:const [BoxShadow(color:Color(0x66ffc76a),blurRadius:18)])),
+        for(final tile in <(String,double,double)>[
+          ('K',0,-48),('E',-47,0),('L',47,0),('İ',0,48)])
+          Transform.translate(offset:Offset(tile.$2,tile.$3),child:Container(
+            width:56,height:56,alignment:Alignment.center,
+            decoration:BoxDecoration(shape:BoxShape.circle,color:const Color(0xfffff4dc),
+              border:Border.all(color:gold,width:3),
+              boxShadow:const [BoxShadow(color:Color(0x99fbbf5d),blurRadius:7)]),
+            child:Text(tile.$1,style:const TextStyle(color:Color(0xff081d39),
+              fontWeight:FontWeight.w900,fontSize:33)))),
+        const Icon(Icons.auto_awesome,color:gold,size:22),
+      ])),
+      const Text('KELİME',style:TextStyle(fontSize:47,letterSpacing:1,height:1,
+        fontWeight:FontWeight.w900,color:gold,
+        shadows:[Shadow(color:Colors.black,offset:Offset(0,4),blurRadius:7)])),
+      Container(padding:const EdgeInsets.symmetric(horizontal:33,vertical:3),
+        decoration:BoxDecoration(color:const Color(0xffa4182b),
+          border:Border.all(color:gold,width:2),borderRadius:BorderRadius.circular(25)),
+        child:const Text('BUL',style:TextStyle(color:Colors.white,fontSize:27,
+          fontWeight:FontWeight.w900,letterSpacing:4))),
+    ]);
+  }
+  Widget navItem(IconData icon,String text,VoidCallback callback,bool active){
+    return InkWell(onTap:callback,borderRadius:BorderRadius.circular(12),
+      child:Padding(padding:const EdgeInsets.symmetric(vertical:6,horizontal:7),
+        child:Column(children:[
+          Icon(icon,color:active?gold:Colors.white,size:25),
+          const SizedBox(height:4),
+          Text(text,style:TextStyle(color:active?gold:Colors.white,
+            fontSize:10,fontWeight:FontWeight.bold)),
+        ])));
+  }
+  Widget homeScreen(){
+    return SafeArea(child:Container(
+      decoration:const BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,
+        end:Alignment.bottomCenter,
+        colors:[Color(0xff02172f),Color(0xff104779),Color(0xff03162f)])),
+      child:Stack(children:[
+        Positioned.fill(child:IgnorePointer(child:Image.asset('assets/backgrounds/level_01.jpg',
+          fit:BoxFit.cover,color:const Color(0xaa05274b),colorBlendMode:BlendMode.darken,
+          errorBuilder:(ctx,e,st)=>const SizedBox.shrink()))),
+        const Positioned.fill(child:IgnorePointer(child:CustomPaint(painter:GoldCorners()))),
+        Column(children:[
+          Padding(padding:const EdgeInsets.fromLTRB(14,13,14,3),child:Row(children:[
+            CircleAvatar(backgroundColor:const Color(0xff07365c),
+              child:const Icon(Icons.person_outline,color:gold)),
+            const Spacer(),
+            Container(padding:const EdgeInsets.symmetric(horizontal:12,vertical:9),
+              decoration:royal(),child:Text('♛ Seviye '+(level+1).toString(),
+                style:const TextStyle(color:gold,fontWeight:FontWeight.w800))),
+            const Spacer(),
+            Container(padding:const EdgeInsets.symmetric(horizontal:10,vertical:9),
+              decoration:royal(),child:Text('🪙 '+coins.toString(),
+                style:const TextStyle(color:gold,fontWeight:FontWeight.w800))),
+          ])),
+          Expanded(child:LayoutBuilder(builder:(ctx,box){
+            return SingleChildScrollView(child:ConstrainedBox(
+              constraints:BoxConstraints(minHeight:box.maxHeight),
+              child:Column(mainAxisAlignment:MainAxisAlignment.spaceEvenly,children:[
+                const SizedBox(height:12),brand(),const SizedBox(height:14),
+                Container(margin:const EdgeInsets.symmetric(horizontal:28),
+                  padding:const EdgeInsets.all(17),decoration:royal(),child:Column(children:[
+                    Text('BÖLÜM '+(level+1).toString()+' / '+packs.length.toString(),
+                      style:const TextStyle(color:gold,fontWeight:FontWeight.w800,letterSpacing:2)),
+                    Text(pack.name,style:const TextStyle(color:Colors.white,
+                      fontSize:20,fontWeight:FontWeight.w900)),
+                    const SizedBox(height:8),
+                    LinearProgressIndicator(value:solved.length/pack.words.length,
+                      minHeight:6,backgroundColor:const Color(0xff31577c),color:gold,
+                      borderRadius:BorderRadius.circular(6)),
+                  ])),
+                Padding(padding:const EdgeInsets.symmetric(horizontal:44,vertical:20),
+                  child:SizedBox(height:58,width:double.infinity,
+                    child:ElevatedButton.icon(onPressed:playGame,
+                      icon:const Icon(Icons.play_arrow_rounded,size:34),
+                      label:const Text('Oyna',style:TextStyle(fontSize:24,
+                        fontWeight:FontWeight.w900)),
+                      style:ElevatedButton.styleFrom(
+                        backgroundColor:const Color(0xff0cba42),
+                        foregroundColor:Colors.white,
+                        shape:RoundedRectangleBorder(
+                          side:const BorderSide(color:gold,width:2),
+                          borderRadius:BorderRadius.circular(30)))))),
+              ]))));
+          })),
+          Container(margin:const EdgeInsets.all(8),padding:const EdgeInsets.all(4),
+            decoration:royal(),child:Row(mainAxisAlignment:MainAxisAlignment.spaceAround,
+            children:[
+              navItem(Icons.home_rounded,'Ana Sayfa',showHome,true),
+              navItem(Icons.map_outlined,'Bölümler',openMap,false),
+              navItem(Icons.emoji_events_outlined,'Başarılar',showAchievements,false),
+              navItem(Icons.settings_outlined,'Ayarlar',showSettings,false),
+            ])),
+        ]),
+      ])));
+  }
+
   @override
   Widget build(BuildContext context){
     final height=MediaQuery.sizeOf(context).height;
-    return Scaffold(
-      backgroundColor:const Color(0xff142440),
-      body:SafeArea(child:Column(children:[
+    return Scaffold(backgroundColor:const Color(0xff041a37),
+      body:onHome?homeScreen():SafeArea(child:Column(children:[
         Expanded(child:landscape()),
         SizedBox(height:math.min(350.0,height*.53),child:controls()),
-      ])),
-    );
+      ])));
   }
   Widget landscape(){
     final colors=[const Color(0xff092850),const Color(0xff2b568b),const Color(0xffce88a6),const Color(0xfff2c095)];
     return Container(
       decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:colors)),
       child:Stack(children:[
-        Positioned.fill(child:Image.asset(level.isEven?'assets/backgrounds/kaaba.jpg':'assets/backgrounds/mosque.jpg',fit:BoxFit.cover,errorBuilder:(context,error,stack)=>const ColoredBox(color:Color(0xff17375d)))),
+        Positioned.fill(child:Image.asset('assets/backgrounds/level_'+(level+1).toString().padLeft(2,'0')+'.jpg',fit:BoxFit.cover,errorBuilder:(context,error,stack)=>const ColoredBox(color:Color(0xff17375d)))),
         const Positioned.fill(child:ColoredBox(color:Color(0x4a071b35))),
         const Positioned.fill(child:IgnorePointer(child:CustomPaint(painter:GoldCorners()))),
         Positioned(top:11,left:12,right:12,child:Row(children:[
-          Material(color:const Color(0xff082f58),shape:const CircleBorder(side:BorderSide(color:Color(0xffffc66b),width:2)),child:IconButton(onPressed:openMap,icon:const Icon(Icons.map_outlined,color:Color(0xffffd78b)))),
+          Material(color:const Color(0xff082f58),shape:const CircleBorder(side:BorderSide(color:Color(0xffffc66b),width:2)),child:IconButton(onPressed:showHome,icon:const Icon(Icons.arrow_back,color:Color(0xffffd78b)))),
           const SizedBox(width:5),
           Expanded(child:Column(children:[
             const Text('KELİME BUL',style:TextStyle(color:Color(0xffffdc92),fontWeight:FontWeight.w900,fontSize:12,letterSpacing:2)),
