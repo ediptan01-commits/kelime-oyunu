@@ -291,7 +291,7 @@ class _WordGameState extends State<WordGame> {
   void showPrivacy(){
     showDialog<void>(context:context,builder:(ctx)=>AlertDialog(
       title:const Text('Gizlilik ve görsel kaynakları'),
-      content:const SingleChildScrollView(child:Text('Kelime Bul çevrimdışı çalışır. Üyelik, reklam ve analiz SDK’sı bulunmaz. Oyun ilerlemesi, puanlar ve ipuçları sadece bu cihazda saklanır. Oyun bu bilgileri geliştiriciye göndermez. Uygulamayı kaldırmak cihazdaki kayıtları silebilir.\\n\\nFotoğraflar: Kâbe — Farazbinyusuf, Wikimedia Commons (CC0 1.0); Sultanahmet Camii — neverbutterfly, Wikimedia Commons (CC BY 2.0). İkinci fotoğraf ekrana sığması için kırpılır ve üzerine yarı saydam karartma uygulanır.\\n\\nGeliştirici: Teknolojix. İletişim bilgileri Google Play mağaza sayfasında yer alacaktır.')),
+      content:const SingleChildScrollView(child:Text('Kelime Bul çevrimdışı çalışır. Üyelik, reklam ve analiz SDK’sı bulunmaz. Oyun ilerlemesi, puanlar ve ipuçları sadece bu cihazda saklanır. Oyun bu bilgileri geliştiriciye göndermez. Uygulamayı kaldırmak cihazdaki kayıtları silebilir.\\n\\nFotoğraflar: 18 farklı İstanbul fotoğrafı Unsplash License altında kullanılır. Her görselin kaynak sayfası ve lisansı assets/backgrounds/credits.json dosyasında kayıtlıdır. Fotoğraflar oyun ekranı için kırpılır ve karartılır.\\n\\nGeliştirici: Teknolojix. İletişim bilgileri Google Play mağaza sayfasında yer alacaktır.')),
       actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('Kapat'))],
     ));
   }
@@ -311,6 +311,13 @@ class _WordGameState extends State<WordGame> {
       title:const Text('🏆 Başarılar'),
       content:Text('Tamamlanan bölüm: '+completedLevels.length.toString()+' / '+packs.length.toString()+
         '\nToplam puan: '+score.toString()+'\nAltın: '+coins.toString()),
+      actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('Kapat'))]));
+  }
+  void showDaily(){
+    effect('button');
+    showDialog<void>(context:context,builder:(ctx)=>AlertDialog(
+      title:const Text('📅 Günlük bulmaca'),
+      content:const Text('Günlük görevler yakında eklenecek. Şimdilik 18 bölümü çevrimdışı oynayabilirsin.'),
       actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('Kapat'))]));
   }
   void showSettings(){
@@ -392,7 +399,7 @@ class _WordGameState extends State<WordGame> {
               constraints:BoxConstraints(minHeight:box.maxHeight),
               child:Column(mainAxisAlignment:MainAxisAlignment.spaceEvenly,children:[
                 const SizedBox(height:12),brand(),const SizedBox(height:14),
-                Container(margin:const EdgeInsets.symmetric(horizontal:28),
+                InkWell(onTap:openMap,borderRadius:BorderRadius.circular(21),child:Container(margin:const EdgeInsets.symmetric(horizontal:28),
                   padding:const EdgeInsets.all(17),decoration:royal(),child:Column(children:[
                     Text('BÖLÜM '+(level+1).toString()+' / '+packs.length.toString(),
                       style:const TextStyle(color:gold,fontWeight:FontWeight.w800,letterSpacing:2)),
@@ -402,7 +409,7 @@ class _WordGameState extends State<WordGame> {
                     LinearProgressIndicator(value:solved.length/pack.words.length,
                       minHeight:6,backgroundColor:const Color(0xff31577c),color:gold,
                       borderRadius:BorderRadius.circular(6)),
-                  ])),
+                  ]))),
                 Padding(padding:const EdgeInsets.symmetric(horizontal:44,vertical:20),
                   child:SizedBox(height:58,width:double.infinity,
                     child:ElevatedButton.icon(onPressed:playGame,
@@ -421,7 +428,7 @@ class _WordGameState extends State<WordGame> {
             decoration:royal(),child:Row(mainAxisAlignment:MainAxisAlignment.spaceAround,
             children:[
               navItem(Icons.home_rounded,'Ana Sayfa',showHome,true),
-              navItem(Icons.map_outlined,'Bölümler',openMap,false),
+              navItem(Icons.calendar_month_outlined,'Günlük',showDaily,false),
               navItem(Icons.emoji_events_outlined,'Başarılar',showAchievements,false),
               navItem(Icons.settings_outlined,'Ayarlar',showSettings,false),
             ])),
