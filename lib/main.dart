@@ -148,7 +148,7 @@ class _WordGameState extends State<WordGame> {
   final rand=math.Random();
   final sounds=<String,AudioPlayer>{};
   bool soundEnabled=true;
-  void effect(String name){if(!soundEnabled)return;final p=sounds.putIfAbsent(name,()=>AudioPlayer());p.stop().then((_)=>p.play(AssetSource('sounds/$name.wav'),volume:name=='tap'?.25:.58)).catchError((Object e){});}
+  void effect(String name){if(!soundEnabled)return;final p=sounds.putIfAbsent(name,()=>AudioPlayer());p.stop().then((_)=>p.play(AssetSource('sounds/$name.wav'),volume: name == 'tap' ? 0.25 : 0.58)).catchError((Object e){});}
   void toggleSound(){setState(()=>soundEnabled=!soundEnabled);widget.prefs.setBool('soundEnabled',soundEnabled);if(soundEnabled)effect('button');}
   @override void dispose(){for(final p in sounds.values){p.dispose();}super.dispose();}
 
