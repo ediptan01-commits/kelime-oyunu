@@ -310,7 +310,7 @@ class _WordGameState extends State<WordGame> {
     return Container(
       decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:colors)),
       child:Stack(children:[
-        Positioned.fill(child:Image.asset('assets/backgrounds/level_${(level+1).toString().padLeft(2,'0')}.jpg',fit:BoxFit.cover,alignment:Alignment.center,errorBuilder:(context,error,stack)=>Image.asset('assets/backgrounds/level_${(level+1).toString().padLeft(2,'0')}.png',fit:BoxFit.cover,errorBuilder:(context,error,stack)=>const ColoredBox(color:Color(0xff17375d))))),
+        Positioned.fill(child:Image.asset(level.isEven?'assets/backgrounds/kaaba.jpg':'assets/backgrounds/mosque.jpg',fit:BoxFit.cover,errorBuilder:(context,error,stack)=>const ColoredBox(color:Color(0xff17375d)))),
         const Positioned.fill(child:ColoredBox(color:Color(0x4a071b35))),
         const Positioned.fill(child:IgnorePointer(child:CustomPaint(painter:GoldCorners()))),
         Positioned(top:11,left:12,right:12,child:Row(children:[

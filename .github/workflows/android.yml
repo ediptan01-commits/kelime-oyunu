@@ -23,8 +23,15 @@ jobs:
         run: flutter create --platforms=android --org com.teknolojix --project-name kelime_rotalari .
       - name: Set Android display name
         run: sed -i 's/android:label="kelime_rotalari"/android:label="Kelime Bul"/' android/app/src/main/AndroidManifest.xml
-      - name: Download 18 licensed Istanbul photos
-        run: python3 scripts/download_istanbul_backgrounds.py
+      - name: Download existing licensed background photos
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets/backgrounds
+          curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 20 --max-time 90             "https://upload.wikimedia.org/wikipedia/commons/1/10/Al-Kaaba_in_Mecca.jpg" -o assets/backgrounds/kaaba.jpg
+          curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 20 --max-time 90             "https://upload.wikimedia.org/wikipedia/commons/a/ae/Sultan_Ahmed_Mosque_-_Istanbul.jpg" -o assets/backgrounds/mosque.jpg
+          test "$(stat -c%s assets/backgrounds/kaaba.jpg)" -gt 10000
+          test "$(stat -c%s assets/backgrounds/mosque.jpg)" -gt 10000
       - name: Generate original sound effects
         run: python3 scripts/generate_sounds.py
       - name: Get packages
