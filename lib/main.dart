@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
@@ -145,6 +146,12 @@ class WordGame extends StatefulWidget {
 
 class _WordGameState extends State<WordGame> {
   final rand=math.Random();
+  final sounds=<String,AudioPlayer>{};
+  bool soundEnabled=true;
+  void effect(String name){if(!soundEnabled)return;final p=sounds.putIfAbsent(name,()=>AudioPlayer());p.stop().then((_)=>p.play(AssetSource('sounds/$name.wav'),volume:name=='tap'?.25:.58)).catchError((Object e){});}
+  void toggleSound(){setState(()=>soundEnabled=!soundEnabled);widget.prefs.setBool('soundEnabled',soundEnabled);if(soundEnabled)effect('button');}
+  @override void dispose(){for(final p in sounds.values){p.dispose();}super.dispose();}
+
   late int level,coins,score,highestUnlocked;
   final completedLevels=<int>{};
   late BoardData board;
@@ -161,6 +168,7 @@ class _WordGameState extends State<WordGame> {
     level=math.max(0,math.min(packs.length-1,widget.prefs.getInt('level')??0));
     highestUnlocked=math.max(level,math.min(packs.length-1,widget.prefs.getInt('highestUnlocked')??level));
     completedLevels.addAll(widget.prefs.getStringList('completedLevels')?.map(int.tryParse).whereType<int>()??<int>[]);
+    soundEnabled=widget.prefs.getBool('soundEnabled')??true;
     coins=widget.prefs.getInt('coins')??120;
     score=widget.prefs.getInt('score')??0;
     loadLevel();
@@ -192,24 +200,24 @@ class _WordGameState extends State<WordGame> {
     }
     return which;
   }
-  void select(int i){if(!picked.contains(i)){setState(()=>picked.add(i));}}
+  void select(int i){if(!picked.contains(i)){setState(()=>picked.add(i));effect('tap');}}
   void submit(){
     if(picked.length<2)return;
     final word=currentWord;
     setState(()=>picked.clear());
-    if(solved.contains(word)){setState(()=>message='Bu kelimeyi zaten buldun.');return;}
-    if(!pack.words.contains(word)){setState(()=>message='Bu kelime bu bölümde yok.');return;}
+    if(solved.contains(word)){effect('error');setState(()=>message='Bu kelimeyi zaten buldun.');return;}
+    if(!pack.words.contains(word)){effect('error');setState(()=>message='Bu kelime bu bölümde yok.');return;}
     setState((){
       solved.add(word);coins+=12;score+=100;
       message='✨ '+word+' doğru! +100 puan, +12 altın';
     });
-    save();
+    effect('success');save();
     if(solved.length==pack.words.length){
       Future.delayed(const Duration(milliseconds:500),(){if(mounted)complete();});
     }
   }
   void hint(){
-    if(coins<35){setState(()=>message='İpucu için 35 altın gerekiyor.');return;}
+    if(coins<35){effect('error');setState(()=>message='İpucu için 35 altın gerekiyor.');return;}
     final shown=<String>{...revealed};
     for(final s in board.slots) {
       if(solved.contains(s.word)){for(var i=0;i<s.word.length;i++){shown.add(s.cell(i));}}
@@ -221,12 +229,13 @@ class _WordGameState extends State<WordGame> {
         setState((){
           revealed.add(s.cell(i));coins-=35;message='💡 Bulmacada bir harf açıldı.';
         });
-        save();return;
+        effect('hint');save();return;
       }
     }
-    setState(()=>message='Açılacak harf kalmadı.');
+    effect('error');setState(()=>message='Açılacak harf kalmadı.');
   }
   void complete(){
+    effect('complete');
     final completedAt=level;
     final firstCompletion=!completedLevels.contains(completedAt);
     if(firstCompletion){
@@ -256,6 +265,7 @@ class _WordGameState extends State<WordGame> {
     );
   }
   void openMap(){
+    effect('button');
     showModalBottomSheet<void>(
       context:context,showDragHandle:true,isScrollControlled:true,
       backgroundColor:const Color(0xfffffbf4),
@@ -300,7 +310,7 @@ class _WordGameState extends State<WordGame> {
     return Container(
       decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:colors)),
       child:Stack(children:[
-        Positioned.fill(child:Image.asset(level.isEven?'assets/backgrounds/kaaba.jpg':'assets/backgrounds/mosque.jpg',fit:BoxFit.cover,alignment:Alignment.center,errorBuilder:(context,error,stack)=>const DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(colors:[Color(0xff193660),Color(0xff93799e)]))))),
+        Positioned.fill(child:Image.asset('assets/backgrounds/level_${(level+1).toString().padLeft(2,'0')}.jpg',fit:BoxFit.cover,alignment:Alignment.center,errorBuilder:(context,error,stack)=>Image.asset('assets/backgrounds/level_${(level+1).toString().padLeft(2,'0')}.png',fit:BoxFit.cover,errorBuilder:(context,error,stack)=>const ColoredBox(color:Color(0xff17375d))))),
         const Positioned.fill(child:ColoredBox(color:Color(0x4a071b35))),
         const Positioned.fill(child:IgnorePointer(child:CustomPaint(painter:GoldCorners()))),
         Positioned(top:11,left:12,right:12,child:Row(children:[
@@ -317,6 +327,7 @@ class _WordGameState extends State<WordGame> {
         Positioned(top:84,left:16,right:16,child:Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[
           Text('BÖLÜM '+(level+1).toString()+'/'+packs.length.toString(),
             style:const TextStyle(color:Colors.white,fontSize:11,fontWeight:FontWeight.w900)),
+          IconButton(onPressed:toggleSound,tooltip:soundEnabled?'Sesi kapat':'Sesi aç',visualDensity:VisualDensity.compact,icon:Icon(soundEnabled?Icons.volume_up:Icons.volume_off,color:const Color(0xffffd48a))),
           Text('⭐ '+solved.length.toString()+'/'+pack.words.length.toString(),
             style:const TextStyle(color:Colors.white,fontSize:12,fontWeight:FontWeight.w900)),
         ])),
@@ -400,7 +411,7 @@ class _WordGameState extends State<WordGame> {
         )),
         const SizedBox(height:9),
         Row(children:[
-          Expanded(child:action(Icons.shuffle,'Karıştır',(){setState((){wheel.shuffle(rand);picked.clear();message='Harfler karıştırıldı.';});})),
+          Expanded(child:action(Icons.shuffle,'Karıştır',(){effect('button');setState((){wheel.shuffle(rand);picked.clear();message='Harfler karıştırıldı.';});})),
           const SizedBox(width:8),
           Expanded(child:action(Icons.check_circle_outline,'Kontrol',submit,special:true)),
           const SizedBox(width:8),
