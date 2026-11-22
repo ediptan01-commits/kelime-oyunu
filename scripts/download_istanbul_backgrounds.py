@@ -1,54 +1,64 @@
-"""Pinned freely licensed Istanbul photos. Avoids Commons search rate limits."""
-import hashlib,json,os,sys,time,urllib.parse,urllib.request
-items=[
-("Sultanahmet Camii","New Mosque (Foreground) and Sultan Ahmed Mosque (Background), Istanbul, Türkiye.jpg","CC0",""),
-("Süleymaniye Camii","Süleymaniye Mosque, Istanbul, 20260606 0805 1307.jpg","CC BY 4.0","https://creativecommons.org/licenses/by/4.0/"),
-("Ortaköy Camii","Ortaköy Square and Mosque Istanbul Turkey.jpg","CC BY 2.0","https://creativecommons.org/licenses/by/2.0/"),
-("Ayasofya","Hagia Sophia in Istanbul 03.01.2015.jpg","CC BY 2.0","https://creativecommons.org/licenses/by/2.0/"),
-("Galata Köprüsü","Under the Galata Bridge, Istanbul (6165295969).jpg","CC BY 2.0","https://creativecommons.org/licenses/by/2.0/"),
-("Fatih Camii","Istanbul Fatih Mosque (54527265756).jpg","CC BY 2.0","https://creativecommons.org/licenses/by/2.0/"),
-("Dolmabahçe Sarayı","Dolmabahce-Palace-Istanbul.jpg","CC BY 4.0","https://creativecommons.org/licenses/by/4.0/"),
-("Galata Kulesi","Views from Galata Tower - Galata Kulesi - Christea Turris - Istanbul, Turkey (10583413774).jpg","CC BY 2.0","https://creativecommons.org/licenses/by/2.0/"),
-("Yeni Camii","New Mosque, Istanbul.jpg","CC BY 2.0","https://creativecommons.org/licenses/by/2.0/"),
-("Boğaziçi Köprüsü","The First Bosphorus Bridge (1973) in Istanbul.jpg","CC BY 4.0","https://creativecommons.org/licenses/by/4.0/"),
-("Topkapı Sarayı","Topkapi Palace, Istanbul.jpg","CC BY-SA 4.0","https://creativecommons.org/licenses/by-sa/4.0/"),
-("Rumeli Hisarı","Rumeli Fortress Istanbul Turkey (216145221).jpeg","CC BY 3.0","https://creativecommons.org/licenses/by/3.0/"),
-("Mihrimah Sultan Camii","Mihrimah Sultan Mosque (Üsküdar) (1).jpg","CC BY-SA 4.0","https://creativecommons.org/licenses/by-sa/4.0/"),
-("Kız Kulesi","Maiden's Tower (Istanbul).jpg","Public domain",""),
-("Eyüp Sultan Camii","Eyüp Sultan Mosque.jpg","CC BY-SA 4.0","https://creativecommons.org/licenses/by-sa/4.0/"),
-("Fatih Sultan Mehmet Köprüsü","Fatih sultan mehmet koprüsü - panoramio.jpg","CC BY 3.0","https://creativecommons.org/licenses/by/3.0/"),
-("Beylerbeyi Sarayı","People entering through the Bosporus Gate, Beylerbeyi Palace, Istanbul, 2008.jpg","CC0",""),
-("Rüstem Paşa Camii","Istanbul - Rüstem-Pascha-Moschee - panoramio (cropped and retouched).jpg","CC BY-SA 3.0","https://creativecommons.org/licenses/by-sa/3.0/"),
+#!/usr/bin/env python3
+"""Download 18 individual Istanbul architectural photographs licensed by Unsplash.
+Each source is a specific free photo page, not Unsplash+ search. Generates attribution.
+"""
+import html,json,os,re,time,urllib.parse,urllib.request,sys
+photos=[
+("Sultanahmet Camii","ttuqgwJuvb4"),
+("Süleymaniye Camii","B2lgGJ3l_rA"),
+("Ortaköy Camii","gXdZ87dK254"),
+("Ayasofya","Tlq23akfSOc"),
+("Galata Kulesi","knh6-CMHs5M"),
+("Sultanahmet ve Haliç","mwrDmnsVkMc"),
+("Dolmabahçe Sarayı","QLLZhLf27QE"),
+("Galata Manzarası","HRhS-mMExhE"),
+("Boğaz ve Camiler","HlOcBSZ71R0"),
+("Boğaziçi Köprüsü","6jAkoGp9lfI"),
+("Topkapı Sarayı","yWu2CV5WlBc"),
+("İstanbul Hisarları","6YCzJ6hq99U"),
+("Ortaköy Sahili","5fKKNEmM4nM"),
+("Kız Kulesi","oX244DoPdb4"),
+("İstanbul Tarihi Yarımada","BnhI8kYMpzs"),
+("Boğaz Köprüsü Gece","9HYZQQRPwVM"),
+("Boğaziçi Gün Batımı","YIllgmj50Nc"),
+("İstanbul Camileri","q3JSX6H4osg"),
 ]
-def get(url):
- req=urllib.request.Request(url,headers={"User-Agent":"KelimeBul/1.1 (GitHub Android build; contact via GitHub)","Accept":"image/*"})
- with urllib.request.urlopen(req,timeout=50) as res:return res.read()
-def url_for(name,thumb=True):
- file=name.replace(" ","_")
- md=hashlib.md5(file.encode("utf8")).hexdigest()
- base="https://upload.wikimedia.org/wikipedia/commons/"
- part=md[0]+"/"+md[:2]+"/"+urllib.parse.quote(file,safe="()'.,-")
- if thumb:return base+"thumb/"+part+"/960px-"+urllib.parse.quote(file,safe="()'.,-")
- return base+part
 os.makedirs("assets/backgrounds",exist_ok=True)
 credits=[]
-for i,(place,filename,license,license_url) in enumerate(items,1):
- data=None;error=None
- for url in ["https://wsrv.nl/?"+urllib.parse.urlencode({"url":url_for(filename,False),"w":960,"output":"jpg"}),url_for(filename,True)]:
-  for attempt in range(2):
-   try:
-    blob=get(url)
-    if blob[:2]!=b"\xff\xd8" or len(blob)<10000:raise ValueError("invalid JPEG")
-    data=blob;break
-   except Exception as e:
-    error=e;print("retry",i,attempt,type(e).__name__,str(e)[:90],flush=True)
-    time.sleep(3*(attempt+1))
-  if data:break
- if not data:sys.exit(f"Cannot fetch {place}, {filename}: {error}")
- with open(f"assets/backgrounds/level_{i:02}.jpg","wb") as fp:fp.write(data)
- credits.append({"level":i,"place":place,"file":filename,"author":"See original Commons file page",
-                 "license":license,"licenseUrl":license_url,
-                 "source":"https://commons.wikimedia.org/wiki/File:"+urllib.parse.quote(filename.replace(" ","_"))})
- print(f"{i:02}/18 {place}: {len(data)} bytes",flush=True)
- time.sleep(.3)
-with open("assets/backgrounds/credits.json","w",encoding="utf8") as fp:json.dump(credits,fp,ensure_ascii=False,indent=2)
+def get(url):
+  req=urllib.request.Request(url,headers={"User-Agent":"Mozilla/5.0 (compatible; KelimeBul/1.1; offline puzzle)","Accept":"text/html,image/*"})
+  with urllib.request.urlopen(req,timeout=45) as r: return r.read()
+for i,(place,id) in enumerate(photos,1):
+  page=f"https://unsplash.com/photos/{id}"
+  raw=None
+  for trial in range(3):
+    try:
+      raw=get(page).decode("utf-8","replace")
+      break
+    except Exception as ex:
+      print("Page retry",i,trial,str(ex)[:100],flush=True)
+      time.sleep(3*(trial+1))
+  if raw is None:sys.exit(f"Cannot retrieve free photo page {place}: {page}")
+  patterns=[r'<meta[^>]+property="og:image"[^>]+content="([^"]+)"',r'<meta[^>]+content="([^"]+)"[^>]+property="og:image"']
+  match=next((m for p in patterns if (m:=re.search(p,raw))),None)
+  if not match:sys.exit(f"No og:image for {place}")
+  img=html.unescape(match.group(1))
+  if "images.unsplash.com" not in img:sys.exit(f"Unexpected image host {place} {img[:120]}")
+  img=img.split("?")[0]+"?auto=format&fit=crop&w=900&h=1200&q=76&fm=jpg"
+  result=None
+  for trial in range(4):
+    try:
+      data=get(img)
+      if data[:2]!=b"\xff\xd8" or len(data)<25000:raise ValueError(f"Bad image data {len(data)}")
+      result=data;break
+    except Exception as ex:
+      print("Image retry",i,trial,str(ex)[:120],flush=True);time.sleep(3*(trial+1))
+  if result is None:sys.exit(f"Could not download {place}: {img[:120]}")
+  filename=f"assets/backgrounds/level_{i:02}.jpg"
+  with open(filename,"wb") as f:f.write(result)
+  artist=re.search(r'"author":\s*\{[^}]*"name":\s*"([^"]+)"',raw)
+  credits.append({"level":i,"place":place,"photo":page,"image_id":id,"author":artist.group(1) if artist else "Unsplash photographer (see source link)","license":"Unsplash License","license_url":"https://unsplash.com/license"})
+  print(f"{i:02}/18 {place} downloaded {len(result)} bytes",flush=True)
+  time.sleep(.4)
+assert len({x["image_id"] for x in credits})==18
+with open("assets/backgrounds/credits.json","w",encoding="utf8") as f:json.dump(credits,f,ensure_ascii=False,indent=2)
