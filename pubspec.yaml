@@ -1,7 +1,7 @@
 name: kelime_rotalari
 description: Turkish crossword word wheel puzzle.
 publish_to: none
-version: 1.1.1+5
+version: 1.1.2+6
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
