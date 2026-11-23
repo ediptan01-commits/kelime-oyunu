@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main, fix/play-upload-signing]
-    paths: ['.github/workflows/google-play-signed.yml']
+    paths: ['.github/workflows/google-play-signed.yml', 'lib/main.dart', 'pubspec.yaml']
 
 permissions:
   contents: read
