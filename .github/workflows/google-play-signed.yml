@@ -110,6 +110,13 @@ jobs:
             exit 1
           fi
           fingerprint=$(sha256sum "$cert" | cut -d' ' -f1)
+          # Immutable upload certificate of the first Kelime Bul release.
+          # SHA-256 is public certificate metadata, never a keystore secret.
+          pinned="aeef7820ba02498fd6ff1f534a911b49590338699b2a81fbf5db283532823001"
+          if [[ "$fingerprint" != "$pinned" ]]; then
+            echo "::error::This is not Kelime Bul's original permanent upload key."
+            exit 1
+          fi
           expected=${PLAY_UPLOAD_SHA256//:/}
           if [[ -n "$expected" && "${expected,,}" != "$fingerprint" ]]; then
             echo "::error::Certificate differs from Play upload certificate"
